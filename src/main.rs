@@ -1,10 +1,14 @@
 use image::{Rgb, RgbImage};
 mod ray_vector;
-use crate::ray_vector::Vec3;
+use ray_vector::Vec3;
 mod ray;
-use crate::ray::Ray;
+use ray::Ray;
+mod hit_record;
+use hit_record::{HitRecord, Hittable, HittableList};
+mod sphere;
+use sphere::Sphere;
 
-fn ray_color(ray: &Ray) -> Vec3 {
+fn ray_color(ray: &mut Ray) -> Vec3 {
     let t = hit_sphere(&Vec3::new(0.0, 0.0, -1.0), 0.5, ray);
     if t > 0.0 {
         let N = (ray.point_at_parameter(t) - Vec3::new(0.0, 0.0, -1.0)).make_unit_vector();
@@ -54,6 +58,13 @@ fn main() {
     let mut y: f32 = (image_height - 1.0) as f32;
     let mut ray: Ray;
     let mut color: Vec3;
+
+    let mut hit_list= Vec::new();
+    hit_list.push(Sphere::new(Vec3::new(0.0,0.0, -1.0), 0.5));
+    hit_list.push(Sphere::new(Vec3::new(0.0,-100.5, -1.0), 100.0));
+
+
+    let world  = HittableList::<Sphere>::new(hit_list, );
     // Render
     while y != 0.0 {
         x = 0.0;
@@ -65,7 +76,7 @@ fn main() {
                 origin,
                 lower_left_corner + u * horizontal + v * vertical - origin,
             );
-            color = ray_color(&ray);
+            color = ray_color(&mut ray);
 
             img.put_pixel(x as u32, y as u32, Rgb(color.to_color_vec()));
             x += 1.0;
