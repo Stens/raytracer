@@ -5,6 +5,7 @@ pub struct HitRecord {
     pub t: f32,
     pub p: Vec3,
     pub normal: Vec3,
+    pub front_face: bool,
 }
 
 pub struct HittableList<T> {
@@ -16,8 +17,17 @@ pub trait Hittable {
 }
 
 impl HitRecord {
-    pub fn new(t: f32, p: Vec3, normal: Vec3) -> HitRecord {
-        HitRecord { t, p, normal }
+    pub fn new(t: f32, p: Vec3, normal: Vec3,) -> HitRecord {
+        HitRecord { t, p, normal, front_face:false }
+    }
+    pub fn set_face_normal(&mut self, ray: &Ray, outward_normal: &Vec3) {
+        self.front_face = ray.direction().dot(outward_normal) < 0.0;
+        if self.front_face {
+            self.normal = -1.0*outward_normal.clone();
+
+        } else {
+            self.normal = outward_normal.clone();
+        }
     }
 }
 
@@ -35,6 +45,7 @@ impl<T: Hittable> Hittable for HittableList<T> {
             t: 0.0,
             p: Vec3::new(0.0, 0.0, 0.0),
             normal: Vec3::new(0.0, 0.0, 0.0),
+            front_face: false
         };
         let mut hit_anything: bool = false;
         let  mut closest_so_far = t_max;

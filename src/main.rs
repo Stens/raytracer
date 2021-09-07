@@ -1,6 +1,6 @@
 use std::f32::INFINITY;
 
-use image::{Rgb, RgbImage};
+use image::{Rgb, RgbImage, DynamicImage};
 mod ray_vector;
 use ray_vector::Vec3;
 mod ray;
@@ -72,5 +72,7 @@ fn main() {
         }
         y -= 1.0;
     }
-    img.save("firstImage.png").expect("Failed to save image");
+    let mut dyn_img = DynamicImage::ImageRgb8(img);
+    dyn_img = dyn_img.rotate180();
+    dyn_img.save("firstImage.png").expect("Failed to save image");
 }
