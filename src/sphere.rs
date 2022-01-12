@@ -1,18 +1,24 @@
+use std::sync::Arc;
+
 use super::HitRecord;
 use super::Hittable;
+use crate::material::Scatter;
 use crate::ray::Ray;
 use crate::ray_vector::Vec3;
 
+#[derive(Clone)]
 pub struct Sphere {
     radius: f32,
     center: Vec3,
+    material: Arc<dyn Scatter>,
 }
 
 impl Sphere {
-    pub fn new(cen: Vec3, r: f32)-> Sphere {
+    pub fn new(cen: Vec3, r: f32, mat: Arc<dyn Scatter>)-> Sphere {
         Sphere {
             radius: r,
             center: cen,
+            material: mat,
         }
     }
 }
@@ -32,6 +38,8 @@ impl Hittable for Sphere {
                 rec.t = temp;
                 rec.p = r.point_at_parameter(rec.t);
                 rec.normal = (rec.p - self.center) / self.radius;
+                rec.material = self.material.clone();
+                rec.front_face_set_normal(r);
                 return true;
             }
             temp = (-b + (discriminant).sqrt()) / a;
@@ -39,6 +47,8 @@ impl Hittable for Sphere {
                 rec.t = temp;
                 rec.p = r.point_at_parameter(rec.t);
                 rec.normal = (rec.p - self.center) / self.radius;
+                rec.material = self.material.clone();
+                rec.front_face_set_normal(r);
                 return true;
             }
         }

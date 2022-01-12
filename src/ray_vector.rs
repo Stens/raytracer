@@ -1,4 +1,6 @@
-use std::ops;
+use std::{ops,};
+
+use rand::Rng;
 #[derive(Debug, Clone, Copy)]
 pub struct Vec3 {
     pub elements: [f32; 3],
@@ -78,6 +80,78 @@ impl Vec3 {
             (self.y() * 255.9) as u8,
             (self.z() * 255.9) as u8,
         ]
+    }
+
+
+    pub fn clamp_color(self, samples_per_pixel: u32) -> Vec3 {
+        let r = self.r() / samples_per_pixel as f32;
+        let g = self.g() / samples_per_pixel as f32;
+        let b = self.b() / samples_per_pixel as f32;
+
+        Vec3::new(r.sqrt(), g.sqrt(), b.sqrt())
+    }
+
+    pub fn random(r: ops::Range<f32>) -> Vec3 {
+       let mut rng = rand::thread_rng();
+       Vec3 { elements: [
+           rng.gen_range(r.clone()) as f32,
+           rng.gen_range(r.clone()) as f32,
+           rng.gen_range(r.clone()) as f32,
+
+        ] }
+    }
+
+    pub fn random_in_unit_sphere() -> Vec3 {
+        let mut rng = rand::thread_rng();
+
+        let phi = rng.gen_range(ops::Range {start:0.0, end:2.0 * std::f32::consts::PI});
+        let theta =  rng.gen_range(ops::Range {start: 0.0, end: std::f32::consts::PI});
+        return Vec3::new(
+            theta.sin() * phi.cos(),
+            theta.sin() * phi.sin(),
+            theta.cos()
+        );
+    }
+
+
+    pub fn random_in_unit_disk() -> Vec3 {
+        let mut rng = rand::thread_rng();
+
+        let phi = rng.gen_range(ops::Range {start:0.0, end:2.0 * std::f32::consts::PI});
+        let theta =  rng.gen_range(ops::Range {start: 0.0, end: std::f32::consts::PI});
+        return Vec3::new(
+            theta.sin() * phi.cos(),
+            theta.sin() * phi.sin(),
+            0.0
+        );
+    }
+
+    pub fn random_in_hemisphere(normal: &Vec3) -> Vec3 {
+        let in_unit_sphere = Vec3::random_in_unit_sphere();
+        if in_unit_sphere.dot(normal) > 0.0 {
+            return in_unit_sphere;
+        } else {
+            return (-1.0) *in_unit_sphere;
+        }
+    }
+
+    pub fn near_zero(&self) -> bool {
+        let epsilon = 1.0e-6;
+        return (self.x().abs() < epsilon) && (self.x().abs() > -epsilon)
+            && (self.y().abs() < epsilon) && (self.y().abs() > -epsilon)
+            && (self.z().abs() < epsilon) && (self.z().abs() > -epsilon);
+    }
+
+
+    pub fn reflect(&self, normal: &Vec3) -> Vec3 {
+        return *self - 2.0 * self.dot(normal) * *normal;
+    }
+
+    pub fn refract(self, normal: &Vec3, etai_over_etat: f32) -> Vec3 {
+        let cos_theta = ((-1.0) *self).dot(normal).min(1.0);
+        let r_out_perp = etai_over_etat * (self +  cos_theta * *normal);
+        let r_out_parallel = -(1.0 - r_out_perp.length().powi(2)).abs().sqrt() * *normal;
+        return r_out_parallel + r_out_perp;
     }
 }
 
@@ -164,6 +238,15 @@ impl ops::Div<Vec3> for Vec3 {
                 self.z() / term.z(),
             ],
         }
+    }
+}
+
+
+impl ops::AddAssign<Vec3> for Vec3 {
+    fn add_assign(&mut self, term: Vec3) {
+        self.elements[0] += term.x();
+        self.elements[1] += term.y();
+        self.elements[2] += term.z();
     }
 }
 
